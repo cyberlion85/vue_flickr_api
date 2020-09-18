@@ -1,32 +1,58 @@
 <template>
-  <div id="app">
-    <div id="nav">
-      <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link>
-    </div>
-    <router-view/>
+  <div class="home">
+    <form>
+      <label>
+        Search:
+        <input v-model="tag" type="text" />
+      </label>
+      <button type="submit" class="go-button" @click.prevent="search">
+        Search
+      </button>
+    </form>
+    <p v-if="loading">Loading...</p>
+    <ul v-else>
+      <li v-for="image in images" :key="image.id">{{ image }}</li>
+    </ul>
   </div>
 </template>
 
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-}
+<script>
+import axios from "axios";
+import config from "../../config.js";
 
-#nav {
-  padding: 30px;
-}
-
-#nav a {
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-#nav a.router-link-exact-active {
-  color: #42b983;
-}
-</style>
+export default {
+  name: "home",
+  data() {
+    return {
+      loading: false,
+      tag: "",
+      images: []
+    };
+  },
+  methods: {
+    search() {
+      this.loading = true;
+      this.fetchImages().then(response => {
+        this.images = response.data.photos.photo;
+        this.loading = false;
+      });
+    },
+    fetchImages() {
+      return axios({
+        method: "get",
+        url: "https://api.flickr.com/services/rest",
+        params: {
+          method: "flickr.photos.search",
+          api_key: config.api_key,
+          tags: this.tag,
+          extras: "url_n, owner_name, date_taken, views",
+          page: 1,
+          format: "json",
+          nojsoncallback: 1,
+          per_page: 30
+        }
+      });
+    }
+  }
+};
+</script>
